@@ -1,16 +1,30 @@
 {
   "expo": {
     "name": "Habbit Tracker",
-    "slug": "HabbitTracker-App",
+    "slug": "habbittracker-app",
+    "version": "0.1.0",
     "icon": "./src/components/Icon.png",
+
     "android": {
+      "package": "com.lysara.habbittracker",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./src/components/Icon.png",
-        "backgroundColor": "#FFFFFF"
+        "backgroundColor": "#0B1B2B"
       }
     },
+
     "ios": {
+      "bundleIdentifier": "com.lysara.habbittracker",
+      "buildNumber": "1",
       "icon": "./src/components/Icon.png"
+    },
+
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "habbittracker",
+    "updates": {
+      "url": null
     }
   }
 }
