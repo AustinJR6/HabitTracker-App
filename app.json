@@ -1,6 +1,16 @@
 {
   "expo": {
     "name": "Habbit Tracker",
-    "slug": "HabbitTracker-App"
+    "slug": "HabbitTracker-App",
+    "icon": "./src/components/Icon.png",
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/components/Icon.png",
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "ios": {
+      "icon": "./src/components/Icon.png"
+    }
   }
 }
