@@ -4,7 +4,6 @@
     "slug": "habbittracker-app",
     "version": "0.1.0",
     "icon": "./src/components/Icon.png",
-
     "android": {
       "package": "com.lysara.habbittracker",
       "versionCode": 1,
@@ -13,18 +12,26 @@
         "backgroundColor": "#0B1B2B"
       }
     },
-
     "ios": {
       "bundleIdentifier": "com.lysara.habbittracker",
       "buildNumber": "1",
       "icon": "./src/components/Icon.png"
     },
-
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "scheme": "habbittracker",
     "updates": {
-      "url": null
-    }
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d5916848-b63e-4833-933a-62a33f2fa5d7"
+      }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
