@@ -1,0 +1,9 @@
+<!-- Migration checklist: switch to AsyncStorage via zustand/persist -->
+
+```sh
+npx expo install @react-native-async-storage/async-storage
+npm remove react-native-mmkv   # or: yarn remove react-native-mmkv
+npx expo install --check
+npx expo-doctor
+expo start
+```

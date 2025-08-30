@@ -9,10 +9,12 @@ import Glow from './src/components/Glow';
 import { useHabitStore } from './src/store/habits';
 import { ensureNotifPermissions, scheduleTodayReminders } from './src/notifications';
 import * as Notifications from 'expo-notifications';
+import { useHydrated } from './src/hooks/useHydrated';
 
 type Tab = 'today' | 'calendar' | 'add';
 
 const App: React.FC = () => {
+  const hydrated = useHydrated();
   const [tab, setTab] = React.useState<Tab>('today');
   const habits = useHabitStore((s) => s.habits);
   const logs = useHabitStore((s) => s.logs);
@@ -30,6 +32,8 @@ const App: React.FC = () => {
   React.useEffect(() => {
     scheduleTodayReminders(habits, logs);
   }, [habits, logs]);
+
+  if (!hydrated) return <View />;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
