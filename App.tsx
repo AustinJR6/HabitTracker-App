@@ -1,23 +1,25 @@
+﻿import 'react-native-gesture-handler';
 import React from 'react';
 import { SafeAreaView, StatusBar, View, Pressable, Text, StyleSheet, Platform } from 'react-native';
 import { palette } from './src/theme/palette';
 import TodayScreen from './src/screens/TodayScreen';
 import CalendarScreen from './src/screens/CalendarScreen';
 import AddHabitScreen from './src/screens/AddHabitScreen';
+import InsightsScreen from './src/screens/InsightsScreen';
 import Header from './src/components/Header';
 import Glow from './src/components/Glow';
-import { useHabitStore } from './src/store/habits';
-import { ensureNotifPermissions, scheduleTodayReminders } from './src/notifications';
+import { ensureNotifPermissions } from './src/notifications';
+import { scheduleV2DailyReminders } from './src/services/notificationsV2';
 import * as Notifications from 'expo-notifications';
 import { useHydrated } from './src/hooks/useHydrated';
+import { useEffect } from 'react';
+import { bootstrap } from './src/bootstrap';
 
-type Tab = 'today' | 'calendar' | 'add';
+type Tab = 'today' | 'calendar' | 'insights' | 'add';
 
 const App: React.FC = () => {
   const hydrated = useHydrated();
   const [tab, setTab] = React.useState<Tab>('today');
-  const habits = useHabitStore((s) => s.habits);
-  const logs = useHabitStore((s) => s.logs);
 
   React.useEffect(() => {
     ensureNotifPermissions();
@@ -29,9 +31,14 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Initialize DB + notifications scheduling without altering UI
+  useEffect(() => {
+    bootstrap().catch(() => {});
+  }, []);
+
   React.useEffect(() => {
-    scheduleTodayReminders(habits, logs);
-  }, [habits, logs]);
+    scheduleV2DailyReminders();
+  }, []);
 
   if (!hydrated) return <View />;
 
@@ -43,11 +50,13 @@ const App: React.FC = () => {
       <View style={{ flex: 1 }}>
         {tab === 'today' && <TodayScreen />}
         {tab === 'calendar' && <CalendarScreen />}
+        {tab === 'insights' && <InsightsScreen />}
         {tab === 'add' && <AddHabitScreen />}
       </View>
       <View style={styles.tabBar}>
         <TabBtn label="Today" active={tab === 'today'} onPress={() => setTab('today')} />
         <TabBtn label="Calendar" active={tab === 'calendar'} onPress={() => setTab('calendar')} />
+        <TabBtn label="Insights" active={tab === 'insights'} onPress={() => setTab('insights')} />
         <TabBtn label="Add" active={tab === 'add'} onPress={() => setTab('add')} />
       </View>
     </SafeAreaView>
@@ -76,3 +85,6 @@ const styles = StyleSheet.create({
 });
 
 export default App;
+
+
+

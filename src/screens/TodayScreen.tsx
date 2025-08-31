@@ -1,34 +1,29 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
 import dayjs from 'dayjs';
-import { useHabitStore } from '../store/habits';
 import HabitItem from '../components/HabitItem';
 import StreakCounter from '../components/StreakCounter';
 import { palette } from '../theme/palette';
 import { metrics } from '../theme/metrics';
+import { useHabitsV2 } from '../hooks/useHabitsV2';
+import { HabitV2 } from '../types/v2';
+import { useTimer } from '../hooks/useTimer';
+import { useOverallStreakV2 } from '../hooks/useStreaksV2';
 
 export default function TodayScreen() {
   const iso = dayjs().format('YYYY-MM-DD');
-  const dayView = useHabitStore((s) => s.dayView);
-  const logStatus = useHabitStore((s) => s.logStatus);
-  const { due, logs } = dayView(iso);
+  const { habits, dueHabits, statusOf, markCompleted } = useHabitsV2();
+  const due: HabitV2[] = dueHabits(iso);
+  const { active, start, stop } = useTimer();
+  const streak = useOverallStreakV2(habits);
 
-  const statusOf = (id: string) => logs.find((l) => l.habitId === id)?.status ?? 'pending';
-
-  // Compute a basic streak from logs of consecutive full days completed (simple placeholder)
-  const streak = React.useMemo(() => {
-    // This app previously had a different streak logic; keep simple for now.
-    // Count last N consecutive days where all due were completed.
-    let s = 0;
-    for (let i = 0; i < 365; i++) {
-      const d = dayjs().subtract(i, 'day').format('YYYY-MM-DD');
-      const { due: dd, logs: ll } = dayView(d);
-      if (dd.length === 0) continue; // ignore days with no due
-      const ok = dd.every((h) => ll.find((l) => l.habitId === h.id)?.status === 'completed');
-      if (ok) s += 1; else break;
-    }
-    return s;
-  }, [dayView, logs]);
+  const badgeFor = (habit: HabitV2, minutes: number) => {
+    if (!habit.milestones || habit.milestones.length === 0) return undefined;
+    const eligible = habit.milestones
+      .filter(m => minutes >= m.minutes)
+      .sort((a,b)=> b.minutes - a.minutes)[0];
+    return eligible?.badge;
+  };
 
   return (
     <View style={styles.container}>
@@ -37,17 +32,40 @@ export default function TodayScreen() {
         <Text style={styles.sectionTitle}>Today</Text>
         <FlatList
           data={due}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <HabitItem
-              label={item.name}
-              checked={statusOf(item.id) === 'completed'}
-              onToggle={() => {
-                const next = statusOf(item.id) === 'completed' ? 'pending' : 'completed';
-                logStatus(item.id, iso, next);
-              }}
-            />
-          )}
+          keyExtractor={(item) => item.habitId}
+          renderItem={({ item }) => {
+            const completed = !!statusOf(item.habitId);
+            const running = active?.habitId === item.habitId;
+            return (
+              <View style={{ gap: 8 }}>
+                <HabitItem
+                  label={item.name}
+                  checked={completed}
+                  onToggle={() => {
+                    if (!item.useTimer) {
+                      // toggle completion for non-timer habits
+                      markCompleted({ habitId: item.habitId, completed: !completed, duration: !completed ? (item.minTime ?? 0) : 0 });
+                    }
+                  }}
+                />
+                {item.useTimer && (
+                  <View style={styles.timerRow}>
+                    {!running ? (
+                      <Pressable onPress={() => start(item.habitId)} style={styles.timerBtn}><Text style={styles.timerText}>Start Timer</Text></Pressable>
+                    ) : (
+                      <Pressable onPress={() => {
+                        const { habitId, minutes } = stop();
+                        const ok = item.minTime ? minutes >= item.minTime : true;
+                        const badge = badgeFor(item, minutes);
+                        markCompleted({ habitId, completed: ok, duration: minutes, badge });
+                      }} style={styles.timerBtnStop}><Text style={styles.timerText}>Stop & Save</Text></Pressable>
+                    )}
+                    {item.minTime != null && <Text style={styles.timerHint}>Min: {item.minTime}m</Text>}
+                  </View>
+                )}
+              </View>
+            );
+          }}
           ListEmptyComponent={<Text style={styles.empty}>No habits due today.</Text>}
         />
       </View>
@@ -66,5 +84,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { color: palette.textDim, fontSize: 14, marginBottom: metrics.gap, letterSpacing: 0.5 },
   empty: { color: palette.textDim, paddingVertical: metrics.pad },
+  timerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  timerBtn: { backgroundColor: palette.accentEnd, paddingVertical: 8, paddingHorizontal: 12, borderRadius: metrics.radius },
+  timerBtnStop: { backgroundColor: '#dc2626', paddingVertical: 8, paddingHorizontal: 12, borderRadius: metrics.radius },
+  timerText: { color: '#fff' },
+  timerHint: { color: palette.textDim },
 });
-
