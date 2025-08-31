@@ -6,6 +6,7 @@ import { ISODate } from '../store/habits';
 import { palette } from '../theme/palette';
 import { metrics } from '../theme/metrics';
 import { useHabitsV2 } from '../hooks/useHabitsV2';
+import Screen from '../components/Screen';
 
 export default function CalendarScreen() {
   const [date, setDate] = React.useState<ISODate>(dayjs().format('YYYY-MM-DD') as ISODate);
@@ -15,13 +16,14 @@ export default function CalendarScreen() {
   const badgeOf = (habitId: string) => logs.find(l => l.habitId === habitId)?.badge;
 
   return (
-    <View style={styles.container}>
+    <Screen style={styles.container}>
       <HabitCalendar onSelectDate={setDate} />
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{dayjs(date).format('ddd, MMM D')}</Text>
         <FlatList
           data={due}
           keyExtractor={(item) => item.habitId}
+          scrollEnabled={false}
           renderItem={({ item }) => (
             <View style={styles.row}>
               <Text style={styles.label}>{item.name}</Text>
@@ -32,12 +34,12 @@ export default function CalendarScreen() {
           ListEmptyComponent={<Text style={styles.empty}>No habits due</Text>}
         />
       </View>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: metrics.pad, gap: metrics.gap },
+  container: { flex: 1, gap: metrics.gap },
   section: {
     backgroundColor: palette.card,
     borderRadius: metrics.radiusXL,

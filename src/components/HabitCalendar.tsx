@@ -7,7 +7,7 @@ import { useHabitsV2 } from '../hooks/useHabitsV2';
 import { getLogsByDateV2 } from '../services/storageV2';
 
 export function HabitCalendar({ onSelectDate }: { onSelectDate: (iso: ISODate) => void }) {
-  const { habits, dueHabits } = useHabitsV2();
+  const { habits, dueHabits, refreshKey } = useHabitsV2();
   const [monthMarks, setMonthMarks] = React.useState<Record<string, any>>({});
 
   React.useEffect(() => {
@@ -32,7 +32,7 @@ export function HabitCalendar({ onSelectDate }: { onSelectDate: (iso: ISODate) =
       if (!cancelled) setMonthMarks(marks);
     })();
     return () => { cancelled = true; };
-  }, [habits, dueHabits]);
+  }, [habits, dueHabits, refreshKey]);
 
   return (
     <Calendar

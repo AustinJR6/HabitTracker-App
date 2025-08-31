@@ -9,6 +9,7 @@ export function useHabitsV2() {
   const [habits, setHabits] = useState<HabitV2[]>([]);
   const [date, setDate] = useState<string>(dayjs().format('YYYY-MM-DD'));
   const [logs, setLogs] = useState<HabitLogV2[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const reloadHabits = useCallback(async () => {
     const arr = await getHabitsV2();
@@ -26,6 +27,7 @@ export function useHabitsV2() {
   const addHabit = useCallback(async (h: HabitV2) => {
     await upsertHabitV2(h);
     await reloadHabits();
+    setRefreshKey((v) => v + 1);
   }, [reloadHabits]);
 
   const updateHabit = useCallback(async (habitId: string, patch: Partial<HabitV2>) => {
@@ -35,17 +37,20 @@ export function useHabitsV2() {
     const next = { ...curr[idx], ...patch } as HabitV2;
     await upsertHabitV2(next);
     await reloadHabits();
+    setRefreshKey((v) => v + 1);
   }, [reloadHabits]);
 
   const removeHabit = useCallback(async (habitId: string) => {
     await deleteHabitV2(habitId);
     await reloadHabits();
+    setRefreshKey((v) => v + 1);
   }, [reloadHabits]);
 
   const markCompleted = useCallback(async (params: { habitId: string; completed: boolean; duration?: number; badge?: string; ymd?: string; }) => {
     const ymd = params.ymd ?? date;
     await logCompletionV2({ date: ymd, habitId: params.habitId, completed: params.completed, duration: Math.max(0, Math.floor(params.duration ?? 0)), badge: params.badge });
     await reloadLogs(ymd);
+    setRefreshKey((v) => v + 1);
   }, [date, reloadLogs]);
 
   const dueHabits = useCallback((ymd: string) => {
@@ -63,6 +68,6 @@ export function useHabitsV2() {
     reloadHabits, reloadLogs,
     addHabit, updateHabit, removeHabit, markCompleted,
     dueHabits, statusOf,
+    refreshKey,
   };
 }
-

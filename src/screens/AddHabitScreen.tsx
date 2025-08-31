@@ -1,17 +1,18 @@
 import React from 'react';
-import { View, StyleSheet, Alert, FlatList, Text, Pressable } from 'react-native';
+import { StyleSheet, Alert, FlatList, Text, Pressable, View } from 'react-native';
 import HabitFormV2 from '../components/HabitFormV2';
 import { palette } from '../theme/palette';
 import { metrics } from '../theme/metrics';
 import { useHabitsV2 } from '../hooks/useHabitsV2';
 import { HabitV2 } from '../types/v2';
+import Screen from '../components/Screen';
 
 export default function AddHabitScreen() {
   const { habits, removeHabit } = useHabitsV2();
   const [editing, setEditing] = React.useState<HabitV2 | null>(null);
 
   return (
-    <View style={styles.container}>
+    <Screen style={styles.container}>
       <HabitFormV2 initial={editing} onSaved={() => {
         if (editing) { Alert.alert('Updated', 'Habit updated.'); setEditing(null); }
         else Alert.alert('Saved', 'Habit added.');
@@ -22,6 +23,7 @@ export default function AddHabitScreen() {
         <FlatList
           data={habits}
           keyExtractor={(item) => item.habitId}
+          scrollEnabled={false}
           renderItem={({ item }) => (
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
@@ -40,12 +42,12 @@ export default function AddHabitScreen() {
           ListEmptyComponent={<Text style={styles.empty}>No habits yet.</Text>}
         />
       </View>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: metrics.pad, gap: metrics.gap, backgroundColor: 'transparent' },
+  container: { flex: 1, gap: metrics.gap, backgroundColor: 'transparent' },
   section: {
     marginTop: metrics.gap,
     backgroundColor: palette.card,
@@ -63,3 +65,4 @@ const styles = StyleSheet.create({
   btnText: { color: '#fff' },
   empty: { color: palette.textDim },
 });
+

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
+import SelectableChip from './SelectableChip';
 import { HabitV2, Milestone, Weekday } from '../types/v2';
 import { palette } from '../theme/palette';
 import { metrics } from '../theme/metrics';
@@ -67,9 +68,7 @@ export default function HabitFormV2({ onSaved, initial }: { onSaved?: () => void
       <Text style={styles.label}>Days</Text>
       <View style={styles.daysWrap}>
         {DOW.map((d) => (
-          <Pressable key={d} onPress={() => toggleDay(d)} style={[styles.day, days.includes(d) && styles.dayActive]}>
-            <Text style={styles.dayText}>{d}</Text>
-          </Pressable>
+          <SelectableChip key={d} label={d} selected={days.includes(d)} onPress={() => toggleDay(d)} />
         ))}
       </View>
 
@@ -163,15 +162,6 @@ const styles = StyleSheet.create({
   },
   label: { color: palette.textDim, fontSize: 14 },
   daysWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  day: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: palette.border,
-    borderRadius: 999,
-  },
-  dayActive: { backgroundColor: palette.card },
-  dayText: { color: palette.text },
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
   switchText: { color: palette.text },
   switchVal: { color: palette.textDim },

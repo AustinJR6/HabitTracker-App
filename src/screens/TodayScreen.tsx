@@ -9,13 +9,14 @@ import { useHabitsV2 } from '../hooks/useHabitsV2';
 import { HabitV2 } from '../types/v2';
 import { useTimer } from '../hooks/useTimer';
 import { useOverallStreakV2 } from '../hooks/useStreaksV2';
+import Screen from '../components/Screen';
 
 export default function TodayScreen() {
   const iso = dayjs().format('YYYY-MM-DD');
-  const { habits, dueHabits, statusOf, markCompleted } = useHabitsV2();
+  const { habits, dueHabits, statusOf, markCompleted, refreshKey } = useHabitsV2();
   const due: HabitV2[] = dueHabits(iso);
   const { active, start, stop } = useTimer();
-  const streak = useOverallStreakV2(habits);
+  const streak = useOverallStreakV2(habits, refreshKey);
 
   const badgeFor = (habit: HabitV2, minutes: number) => {
     if (!habit.milestones || habit.milestones.length === 0) return undefined;
@@ -26,13 +27,14 @@ export default function TodayScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <Screen style={styles.container}>
       <StreakCounter streak={streak} />
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Today</Text>
         <FlatList
           data={due}
           keyExtractor={(item) => item.habitId}
+          scrollEnabled={false}
           renderItem={({ item }) => {
             const completed = !!statusOf(item.habitId);
             const running = active?.habitId === item.habitId;
@@ -69,12 +71,12 @@ export default function TodayScreen() {
           ListEmptyComponent={<Text style={styles.empty}>No habits due today.</Text>}
         />
       </View>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: metrics.pad, gap: metrics.gap },
+  container: { flex: 1, gap: metrics.gap },
   section: {
     backgroundColor: palette.card,
     borderRadius: metrics.radiusXL,

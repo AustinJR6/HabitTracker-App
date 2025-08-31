@@ -1,10 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import dayjs from 'dayjs';
 import { VictoryBar, VictoryChart, VictoryTheme, VictoryAxis } from 'victory-native';
 import { getHabitsV2, getLogsByDateV2 } from '../services/storageV2';
 import { HabitV2 } from '../types/v2';
 import { useOverallStreakV2, usePerHabitStreaksV2 } from '../hooks/useStreaksV2';
+import Screen from '../components/Screen';
+import { useHabitsV2 } from '../hooks/useHabitsV2';
 import { palette } from '../theme/palette';
 import { metrics } from '../theme/metrics';
 
@@ -34,8 +36,9 @@ export default function InsightsScreen() {
   const [habits, setHabits] = React.useState<HabitV2[]>([]);
   const [totals, setTotals] = React.useState<Totals>({});
   const [badgeCounts, setBadgeCounts] = React.useState<BadgeCounts>({});
-  const streaks = usePerHabitStreaksV2(habits);
-  const overall = useOverallStreakV2(habits);
+  const { refreshKey } = useHabitsV2();
+  const streaks = usePerHabitStreaksV2(habits, refreshKey);
+  const overall = useOverallStreakV2(habits, refreshKey);
 
   React.useEffect(() => {
     (async () => {
@@ -49,7 +52,7 @@ export default function InsightsScreen() {
   const data = habits.map(h => ({ habit: h.name, minutes: totals[h.habitId] ?? 0 })).filter(x => x.minutes > 0);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+    <Screen style={styles.container}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text style={styles.sectionTitle}>Insights ({mode})</Text>
         <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -86,12 +89,12 @@ export default function InsightsScreen() {
           );
         })}
       </View>
-    </ScrollView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: metrics.pad, backgroundColor: 'transparent' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   section: {
     backgroundColor: palette.card,
     borderRadius: metrics.radiusXL,
