@@ -23,3 +23,7 @@ export type HabitLogV2 = {
   badge?: string; // badge if milestones exist
 };
 
+export type RunningTimer = {
+  habitId: string;
+  startedAt: string; // ISO timestamp
+};

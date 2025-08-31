@@ -6,11 +6,11 @@ export async function exportDbToJson(): Promise<string> {
   const db = getDb();
   const dump: Record<string, any[]> = { habits: [], completions: [], sessions: [], settings: [] };
   await new Promise<void>((resolve, reject) => {
-    db.readTransaction((tx) => {
+    db.readTransaction((tx: any) => {
       const tables = Object.keys(dump);
       let remaining = tables.length;
       for (const t of tables) {
-        tx.executeSql(`SELECT * FROM ${t};`, [], (_t, rs) => {
+        tx.executeSql(`SELECT * FROM ${t};`, [], (_t: any, rs: any) => {
           const arr: any[] = [];
           for (let i = 0; i < rs.rows.length; i++) arr.push(rs.rows.item(i));
           dump[t] = arr;
@@ -18,7 +18,7 @@ export async function exportDbToJson(): Promise<string> {
           if (remaining === 0) resolve();
         });
       }
-    }, (e) => reject(e));
+    }, (e: any) => reject(e));
   });
 
   const json = JSON.stringify(dump, null, 2);
@@ -36,7 +36,7 @@ export async function importDbFromJson(fileUri: string): Promise<void> {
   const data = JSON.parse(json) as Record<string, any[]>;
   await new Promise<void>((resolve, reject) => {
     db.transaction(
-      (tx) => {
+      (tx: any) => {
         tx.executeSql('DELETE FROM habits;');
         tx.executeSql('DELETE FROM completions;');
         tx.executeSql('DELETE FROM sessions;');
@@ -65,9 +65,8 @@ export async function importDbFromJson(fileUri: string): Promise<void> {
           tx.executeSql(`INSERT INTO settings(key,value) VALUES(?,?);`, [kv.key, kv.value]);
         }
       },
-      (e) => reject(e),
+      (e: any) => reject(e),
       () => resolve()
     );
   });
 }
-

@@ -11,11 +11,11 @@ export function useToday() {
       const tz = await getTimezone();
       const today = ymd(new Date(), tz);
       const db = getDb();
-      db.readTransaction((tx) => {
+      db.readTransaction((tx: any) => {
         tx.executeSql(
           `SELECT SUM(completed) AS completedCount, COUNT(*) AS total, SUM(duration_sec) AS seconds FROM completions WHERE ymd = ?;`,
           [today],
-          (_t, rs) => {
+          (_t: any, rs: any) => {
             if (rs.rows.length > 0) {
               const r = rs.rows.item(0) as any;
               setState({ completedCount: r.completedCount ?? 0, total: r.total ?? 0, seconds: r.seconds ?? 0 });
@@ -27,4 +27,3 @@ export function useToday() {
   }, []);
   return state;
 }
-

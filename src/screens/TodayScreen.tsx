@@ -7,7 +7,8 @@ import { palette } from '../theme/palette';
 import { metrics } from '../theme/metrics';
 import { useHabitsV2 } from '../hooks/useHabitsV2';
 import { HabitV2 } from '../types/v2';
-import { useTimer } from '../hooks/useTimer';
+import { useRunningTimers } from '../hooks/useRunningTimers';
+import { msToMMSS } from '../utils/time';
 import { useOverallStreakV2 } from '../hooks/useStreaksV2';
 import Screen from '../components/Screen';
 
@@ -15,7 +16,14 @@ export default function TodayScreen() {
   const iso = dayjs().format('YYYY-MM-DD');
   const { habits, dueHabits, statusOf, markCompleted, refreshKey } = useHabitsV2();
   const due: HabitV2[] = dueHabits(iso);
-  const { active, start, stop } = useTimer();
+  const { runningTimers, startTimer, stopTimer, getElapsedMs } = useRunningTimers({
+    habits,
+    onAutoComplete: (habitId, minutes, badge) => {
+      // auto-mark complete when threshold met
+      // Note: markCompleted persists the log and triggers refreshKey changes
+      markCompleted({ habitId, completed: true, duration: minutes, badge });
+    },
+  });
   const streak = useOverallStreakV2(habits, refreshKey);
 
   const badgeFor = (habit: HabitV2, minutes: number) => {
@@ -37,7 +45,7 @@ export default function TodayScreen() {
           scrollEnabled={false}
           renderItem={({ item }) => {
             const completed = !!statusOf(item.habitId);
-            const running = active?.habitId === item.habitId;
+            const running = !!runningTimers[item.habitId];
             return (
               <View style={{ gap: 8 }}>
                 <HabitItem
@@ -53,16 +61,19 @@ export default function TodayScreen() {
                 {item.useTimer && (
                   <View style={styles.timerRow}>
                     {!running ? (
-                      <Pressable onPress={() => start(item.habitId)} style={styles.timerBtn}><Text style={styles.timerText}>Start Timer</Text></Pressable>
+                      <Pressable onPress={() => startTimer(item.habitId)} style={styles.timerBtn}><Text style={styles.timerText}>Start</Text></Pressable>
                     ) : (
                       <Pressable onPress={() => {
-                        const { habitId, minutes } = stop();
+                        const ms = getElapsedMs(item.habitId);
+                        const minutes = Math.max(0, Math.round(ms / 60000));
                         const ok = item.minTime ? minutes >= item.minTime : true;
                         const badge = badgeFor(item, minutes);
-                        markCompleted({ habitId, completed: ok, duration: minutes, badge });
+                        stopTimer(item.habitId, { saveAsCompleted: ok, minutesOverride: minutes, badge });
                       }} style={styles.timerBtnStop}><Text style={styles.timerText}>Stop & Save</Text></Pressable>
                     )}
-                    {item.minTime != null && <Text style={styles.timerHint}>Min: {item.minTime}m</Text>}
+                    <Text style={styles.timerHint}>
+                      {item.minTime != null ? `Min: ${item.minTime}m • ` : ''}{msToMMSS(getElapsedMs(item.habitId))}
+                    </Text>
                   </View>
                 )}
               </View>

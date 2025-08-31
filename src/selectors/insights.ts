@@ -4,7 +4,7 @@ export async function getDailyCompletion(fromYmd: string, toYmd: string) {
   const db = getDb();
   return new Promise<any[]>((resolve, reject) => {
     db.readTransaction(
-      (tx) => {
+      (tx: any) => {
         tx.executeSql(
           `SELECT ymd, SUM(completed) AS completedCount,
                   COUNT(*) AS total, SUM(duration_sec) AS seconds
@@ -13,14 +13,14 @@ export async function getDailyCompletion(fromYmd: string, toYmd: string) {
            GROUP BY ymd
            ORDER BY ymd;`,
           [fromYmd, toYmd],
-          (_t, rs) => {
+          (_t: any, rs: any) => {
             const arr: any[] = [];
             for (let i = 0; i < rs.rows.length; i++) arr.push(rs.rows.item(i));
             resolve(arr);
           }
         );
       },
-      (e) => reject(e)
+      (e: any) => reject(e)
     );
   });
 }
@@ -30,11 +30,11 @@ export async function getHabitStreaks(habitId: string) {
   // compute contiguous streak backwards from latest completed
   return new Promise<number>((resolve, reject) => {
     db.readTransaction(
-      (tx) => {
+      (tx: any) => {
         tx.executeSql(
           `SELECT ymd FROM completions WHERE habit_id=? AND completed=1 ORDER BY ymd DESC;`,
           [habitId],
-          (_t, rs) => {
+          (_t: any, rs: any) => {
             const days: string[] = [];
             for (let i = 0; i < rs.rows.length; i++) days.push(rs.rows.item(i).ymd);
             let streak = 0;
@@ -57,7 +57,7 @@ export async function getHabitStreaks(habitId: string) {
           }
         );
       },
-      (e) => reject(e)
+      (e: any) => reject(e)
     );
   });
 }
@@ -66,7 +66,7 @@ export async function getTimeOfDayHistogram(habitId: string) {
   const db = getDb();
   return new Promise<any[]>((resolve, reject) => {
     db.readTransaction(
-      (tx) => {
+      (tx: any) => {
         tx.executeSql(
           `SELECT CAST(strftime('%H', datetime(completed_at/1000, 'unixepoch')) AS INTEGER) AS hour,
                   COUNT(*) AS hits
@@ -74,14 +74,14 @@ export async function getTimeOfDayHistogram(habitId: string) {
            WHERE habit_id = ? AND completed = 1 AND completed_at IS NOT NULL
            GROUP BY hour ORDER BY hour;`,
           [habitId],
-          (_t, rs) => {
+          (_t: any, rs: any) => {
             const arr: any[] = [];
             for (let i = 0; i < rs.rows.length; i++) arr.push(rs.rows.item(i));
             resolve(arr);
           }
         );
       },
-      (e) => reject(e)
+      (e: any) => reject(e)
     );
   });
 }
@@ -90,7 +90,7 @@ export async function getTimeOnTaskSeries(habitId: string | null, fromYmd: strin
   const db = getDb();
   return new Promise<any[]>((resolve, reject) => {
     db.readTransaction(
-      (tx) => {
+      (tx: any) => {
         tx.executeSql(
           `SELECT ymd, SUM(duration_sec) AS seconds
            FROM completions
@@ -98,14 +98,14 @@ export async function getTimeOnTaskSeries(habitId: string | null, fromYmd: strin
              AND ymd BETWEEN ? AND ?
            GROUP BY ymd ORDER BY ymd;`,
           [habitId, habitId, fromYmd, toYmd],
-          (_t, rs) => {
+          (_t: any, rs: any) => {
             const arr: any[] = [];
             for (let i = 0; i < rs.rows.length; i++) arr.push(rs.rows.item(i));
             resolve(arr);
           }
         );
       },
-      (e) => reject(e)
+      (e: any) => reject(e)
     );
   });
 }
@@ -114,7 +114,7 @@ export async function getNudgeEffectiveness(habitId: string) {
   const db = getDb();
   return new Promise<number | null>((resolve, reject) => {
     db.readTransaction(
-      (tx) => {
+      (tx: any) => {
         tx.executeSql(
           `SELECT SUM(CASE WHEN completed=1
                             AND nudge_at IS NOT NULL
@@ -124,14 +124,13 @@ export async function getNudgeEffectiveness(habitId: string) {
            FROM completions
            WHERE habit_id = ?;`,
           [habitId],
-          (_t, rs) => {
+          (_t: any, rs: any) => {
             if (rs.rows.length > 0) resolve(rs.rows.item(0).pct ?? null);
             else resolve(null);
           }
         );
       },
-      (e) => reject(e)
+      (e: any) => reject(e)
     );
   });
 }
-

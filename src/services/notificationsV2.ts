@@ -18,8 +18,7 @@ export async function scheduleV2DailyReminders() {
     const when = dayjs().hour(h.notificationTime.hour).minute(h.notificationTime.minute).second(0);
     const target = when.isAfter(dayjs()) ? when.toDate() : when.add(1,'day').toDate();
     try {
-      await Notifications.scheduleNotificationAsync({ content: { title: 'Habit Reminder', body: h.name }, trigger: target });
+      await Notifications.scheduleNotificationAsync({ content: { title: 'Habit Reminder', body: h.name }, trigger: { date: target } as any });
     } catch {}
   }
 }
-

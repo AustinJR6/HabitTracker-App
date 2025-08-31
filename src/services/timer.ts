@@ -13,7 +13,7 @@ export async function startSession(habitId: string, tz?: string): Promise<string
 
   await new Promise<void>((resolve, reject) => {
     db.transaction(
-      (tx) => {
+      (tx: any) => {
         tx.executeSql(
           `INSERT INTO completions(id, habit_id, ymd, completed, completed_at, duration_sec)
            VALUES(?, ?, ?, COALESCE((SELECT completed FROM completions WHERE id=?), 0),
@@ -27,7 +27,7 @@ export async function startSession(habitId: string, tz?: string): Promise<string
           [sessionId, habitId, ymd, now, now, 0]
         );
       },
-      (e) => reject(e),
+      (e: any) => reject(e),
       () => resolve()
     );
   });
@@ -41,7 +41,7 @@ export async function stopSession(sessionId: string): Promise<number> {
   let duration = 0;
   await new Promise<void>((resolve, reject) => {
     db.transaction(
-      (tx) => {
+      (tx: any) => {
         tx.executeSql(
           `UPDATE sessions SET stopped_at=?, duration_sec=(? - started_at)/1000 WHERE id=?;`,
           [now, now, sessionId]
@@ -49,7 +49,7 @@ export async function stopSession(sessionId: string): Promise<number> {
         tx.executeSql(
           `SELECT habit_id, ymd, duration_sec FROM sessions WHERE id=?;`,
           [sessionId],
-          (_t, rs) => {
+          (_t: any, rs: any) => {
             if (rs.rows.length > 0) {
               const row = rs.rows.item(0) as any;
               duration = Math.max(0, Math.floor(row.duration_sec));
@@ -63,7 +63,7 @@ export async function stopSession(sessionId: string): Promise<number> {
           }
         );
       },
-      (e) => reject(e),
+      (e: any) => reject(e),
       () => resolve()
     );
   });
@@ -85,16 +85,15 @@ export async function markComplete(habitId: string, tz?: string): Promise<void> 
   const id = `${habitId}:${ymd}`;
   await new Promise<void>((resolve, reject) => {
     db.transaction(
-      (tx) => {
+      (tx: any) => {
         tx.executeSql(
           `UPDATE completions SET completed=1, completed_at=? WHERE id=?;`,
           [now, id]
         );
       },
-      (e) => reject(e),
+      (e: any) => reject(e),
       () => resolve()
     );
   });
   await cancelHabitNudges(habitId);
 }
-

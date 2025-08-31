@@ -29,3 +29,9 @@ export function toLocalTZ(date: Date, tz: string): Dayjs {
 
 export type { Dayjs };
 
+export function msToMMSS(ms: number): string {
+  const total = Math.floor(ms / 1000);
+  const m = Math.floor(total / 60);
+  const s = String(total % 60).padStart(2, '0');
+  return `${m}:${s}`;
+}

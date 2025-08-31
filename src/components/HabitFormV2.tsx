@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef, useImperativeHandle } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import SelectableChip from './SelectableChip';
 import { HabitV2, Milestone, Weekday } from '../types/v2';
@@ -8,7 +8,12 @@ import { upsertHabitV2 } from '../services/storageV2';
 
 const DOW: Weekday[] = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-export default function HabitFormV2({ onSaved, initial }: { onSaved?: () => void; initial?: HabitV2 | null }) {
+export type HabitFormV2Ref = { submit: () => void };
+
+export default forwardRef<HabitFormV2Ref, { onSaved?: () => void; initial?: HabitV2 | null; hideSubmit?: boolean }>(function HabitFormV2(
+  { onSaved, initial, hideSubmit },
+  ref
+) {
   const [name, setName] = React.useState(initial?.name ?? '');
   const [days, setDays] = React.useState<Weekday[]>(initial?.days ?? ['Mon','Tue','Wed','Thu','Fri']);
   const [useTimer, setUseTimer] = React.useState(!!initial?.useTimer);
@@ -48,6 +53,8 @@ export default function HabitFormV2({ onSaved, initial }: { onSaved?: () => void
     }
     onSaved?.();
   };
+
+  useImperativeHandle(ref, () => ({ submit: save }), [save]);
 
   const updateMilestone = (idx: number, patch: Partial<Milestone>) => {
     setMilestones(prev => prev.map((m,i)=> i===idx ? { ...m, ...patch } : m));
@@ -142,12 +149,14 @@ export default function HabitFormV2({ onSaved, initial }: { onSaved?: () => void
         />
       </View>
 
-      <Pressable onPress={save} style={styles.saveBtn}>
-        <Text style={styles.saveText}>{initial ? 'Update Habit' : 'Save Habit'}</Text>
-      </Pressable>
+      {!hideSubmit && (
+        <Pressable onPress={save} style={styles.saveBtn}>
+          <Text style={styles.saveText}>{initial ? 'Update Habit' : 'Save Habit'}</Text>
+        </Pressable>
+      )}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   wrap: { gap: metrics.gap },

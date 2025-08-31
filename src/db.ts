@@ -1,10 +1,12 @@
 import * as SQLite from 'expo-sqlite';
 
-let _db: SQLite.WebSQLDatabase | null = null;
+let _db: any = null;
 
-export function getDb(): SQLite.WebSQLDatabase {
+export function getDb(): any {
   if (_db) return _db;
-  _db = SQLite.openDatabase('habittracker.db');
+  const anySqlite: any = SQLite as any;
+  // Support both legacy and new APIs across SDK versions
+  _db = anySqlite.openDatabase?.('habittracker.db') ?? anySqlite.openDatabaseSync?.('habittracker.db');
   return _db;
 }
 
@@ -12,7 +14,7 @@ export function initDb(): Promise<void> {
   const db = getDb();
   return new Promise((resolve, reject) => {
     db.transaction(
-      (tx) => {
+      (tx: any) => {
         tx.executeSql(`CREATE TABLE IF NOT EXISTS habits (
           id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
@@ -53,7 +55,7 @@ export function initDb(): Promise<void> {
           value TEXT NOT NULL
         );`);
       },
-      (err) => reject(err),
+      (err: any) => reject(err),
       () => resolve()
     );
   });
@@ -63,13 +65,13 @@ export function setSetting(key: string, value: string): Promise<void> {
   const db = getDb();
   return new Promise((resolve, reject) => {
     db.transaction(
-      (tx) => {
+      (tx: any) => {
         tx.executeSql(
           `INSERT INTO settings(key, value) VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value;`,
           [key, value]
         );
       },
-      (e) => reject(e),
+      (e: any) => reject(e),
       () => resolve()
     );
   });
@@ -79,18 +81,17 @@ export function getSetting(key: string): Promise<string | null> {
   const db = getDb();
   return new Promise((resolve, reject) => {
     db.readTransaction(
-      (tx) => {
+      (tx: any) => {
         tx.executeSql(
           `SELECT value FROM settings WHERE key = ? LIMIT 1;`,
           [key],
-          (_t, rs) => {
+          (_t: any, rs: any) => {
             if (rs.rows.length > 0) resolve((rs.rows.item(0) as any).value as string);
             else resolve(null);
           }
         );
       },
-      (e) => reject(e)
+      (e: any) => reject(e)
     );
   });
 }
-

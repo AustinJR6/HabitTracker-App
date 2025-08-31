@@ -6,11 +6,11 @@ export function useHabits() {
   const [habits, setHabits] = useState<Habit[]>([]);
   useEffect(() => {
     const db = getDb();
-    db.readTransaction((tx) => {
+    db.readTransaction((tx: any) => {
       tx.executeSql(
         `SELECT id, name, cadence, archived, created_at, nudge_enabled, nudge_hour, nudge_minute, timer_enabled, min_required_minutes, default_session_minutes FROM habits;`,
         [],
-        (_t, rs) => {
+        (_t: any, rs: any) => {
           const arr: Habit[] = [];
           for (let i = 0; i < rs.rows.length; i++) {
             const r = rs.rows.item(i) as any;
@@ -35,4 +35,3 @@ export function useHabits() {
   }, []);
   return habits;
 }
-

@@ -8,8 +8,11 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: false,
     shouldSetBadge: false,
-  }),
-});
+    // Added for iOS behavior keys in newer SDKs
+    shouldShowBanner: true as any,
+    shouldShowList: true as any,
+  }) as any,
+} as any);
 
 export async function ensureNotifPermissions() {
   try {
@@ -47,7 +50,7 @@ export async function scheduleTodayReminders(habits: Habit[], logs: HabitLog[]) 
         if (when.getTime() <= Date.now()) continue;
         await Notifications.scheduleNotificationAsync({
           content: { title: 'Habit Reminder', body: h.name },
-          trigger: when,
+          trigger: { type: 'date', date: when } as any,
         });
       }
     }
@@ -58,9 +61,12 @@ export async function scheduleTodayReminders(habits: Habit[], logs: HabitLog[]) 
     if (pendingCount > 0 && cutoff.getTime() > Date.now()) {
       await Notifications.scheduleNotificationAsync({
         content: { title: 'Evening nudge', body: 'You still have habits to finish — quick win time.' },
-        trigger: cutoff,
+        trigger: { type: 'date', date: cutoff } as any,
       });
     }
   } catch {}
 }
+
+
+
 

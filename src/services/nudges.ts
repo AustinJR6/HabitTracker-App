@@ -33,7 +33,7 @@ export async function scheduleHabitNudge(habit: Habit, tz?: string) {
 
   const notifId = await Notifications.scheduleNotificationAsync({
     content: { title: 'Habit Reminder', body: habit.name },
-    trigger: when,
+    trigger: { date: when } as any,
   });
 
   const map = await getScheduleMap();
@@ -44,7 +44,7 @@ export async function scheduleHabitNudge(habit: Habit, tz?: string) {
   const ymd = ymdInTz(new Date(), tzName);
   const id = `${habit.id}:${ymd}`;
   const nudgeAt = when.getTime();
-  db.transaction((tx) => {
+  db.transaction((tx: any) => {
     tx.executeSql(
       `INSERT INTO completions(id, habit_id, ymd, completed, completed_at, duration_sec, nudge_at)
        VALUES(?, ?, ?, COALESCE((SELECT completed FROM completions WHERE id=?), 0),
@@ -71,11 +71,11 @@ export async function ensureDailyNotifications(tz?: string) {
   const db = getDb();
   const tzName = tz || (await getTimezone());
   await new Promise<void>((resolve, reject) => {
-    db.readTransaction((tx) => {
+    db.readTransaction((tx: any) => {
       tx.executeSql(
         `SELECT id, name, cadence, archived, created_at, nudge_enabled, nudge_hour, nudge_minute, timer_enabled, min_required_minutes, default_session_minutes FROM habits WHERE archived = 0;`,
         [],
-        async (_t, rs) => {
+        async (_t: any, rs: any) => {
           const habits: Habit[] = [];
           for (let i = 0; i < rs.rows.length; i++) {
             const r = rs.rows.item(i) as any;
@@ -108,7 +108,6 @@ export async function ensureDailyNotifications(tz?: string) {
           resolve();
         }
       );
-    }, (e) => reject(e));
+    }, (e: any) => reject(e));
   });
 }
-

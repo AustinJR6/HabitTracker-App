@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, DateObject } from 'react-native-calendars';
+import { Calendar, DateData } from 'react-native-calendars';
 import dayjs from 'dayjs';
 import { ISODate } from '../store/habits';
 import { palette } from '../theme/palette';
@@ -38,7 +38,7 @@ export function HabitCalendar({ onSelectDate }: { onSelectDate: (iso: ISODate) =
     <Calendar
       markingType="custom"
       markedDates={monthMarks}
-      onDayPress={(d: DateObject) => onSelectDate(d.dateString as ISODate)}
+      onDayPress={(d: DateData) => onSelectDate(d.dateString as ISODate)}
       theme={{
         backgroundColor: palette.bg,
         calendarBackground: palette.bg,

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import dayjs from 'dayjs';
-import { VictoryBar, VictoryChart, VictoryTheme, VictoryAxis } from 'victory-native';
+import * as V from 'victory-native';
 import { getHabitsV2, getLogsByDateV2 } from '../services/storageV2';
 import { HabitV2 } from '../types/v2';
 import { useOverallStreakV2, usePerHabitStreaksV2 } from '../hooks/useStreaksV2';
@@ -62,11 +62,11 @@ export default function InsightsScreen() {
       </View>
       <Text style={styles.row}>Overall streak: {overall} day(s)</Text>
       {data.length > 0 ? (
-        <VictoryChart theme={VictoryTheme.material} domainPadding={20}>
-          <VictoryAxis style={{ tickLabels: { angle: 45, fill: '#cbd5e1', fontSize: 10 } }} />
-          <VictoryAxis dependentAxis style={{ tickLabels: { fill: '#cbd5e1' } }} tickFormat={(t) => `${t}m`} />
-          <VictoryBar data={data} x="habit" y="minutes" style={{ data: { fill: '#4f46e5' } }} />
-        </VictoryChart>
+        <V.VictoryChart theme={V.VictoryTheme.material} domainPadding={20}>
+          <V.VictoryAxis style={{ tickLabels: { angle: 45, fill: '#cbd5e1', fontSize: 10 } }} />
+          <V.VictoryAxis dependentAxis style={{ tickLabels: { fill: '#cbd5e1' } }} tickFormat={(t: any) => `${t}m`} />
+          <V.VictoryBar data={data} x="habit" y="minutes" style={{ data: { fill: '#4f46e5' } }} />
+        </V.VictoryChart>
       ) : (
         <Text style={styles.empty}>No time tracked yet.</Text>
       )}
