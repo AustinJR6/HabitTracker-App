@@ -9,7 +9,7 @@
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./src/components/Icon.png",
-        "backgroundColor": "#0B1B2B"
+        "backgroundColor": "#FFFFFF"
       }
     },
     "ios": {

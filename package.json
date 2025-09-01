@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "clean:android": "expo prebuild --clean && cd android && ./gradlew clean && cd .."
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
