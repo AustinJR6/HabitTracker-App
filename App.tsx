@@ -1,6 +1,7 @@
 ﻿import 'react-native-gesture-handler';
 import React from 'react';
 import { SafeAreaView, StatusBar, View, Pressable, Text, StyleSheet, Platform } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { palette } from './src/theme/palette';
 import TodayScreen from './src/screens/TodayScreen';
 import CalendarScreen from './src/screens/CalendarScreen';
@@ -43,23 +44,25 @@ const App: React.FC = () => {
   if (!hydrated) return <View />;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
-      <StatusBar barStyle="light-content" />
-      <Glow />
-      <Header />
-      <View style={{ flex: 1 }}>
-        {tab === 'today' && <TodayScreen />}
-        {tab === 'calendar' && <CalendarScreen />}
-        {tab === 'insights' && <InsightsScreen />}
-        {tab === 'add' && <AddHabitScreen />}
-      </View>
-      <View style={styles.tabBar}>
-        <TabBtn label="Today" active={tab === 'today'} onPress={() => setTab('today')} />
-        <TabBtn label="Calendar" active={tab === 'calendar'} onPress={() => setTab('calendar')} />
-        <TabBtn label="Insights" active={tab === 'insights'} onPress={() => setTab('insights')} />
-        <TabBtn label="Add" active={tab === 'add'} onPress={() => setTab('add')} />
-      </View>
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
+        <StatusBar barStyle="light-content" />
+        <Glow />
+        <Header />
+        <View style={{ flex: 1 }}>
+          {tab === 'today' && <TodayScreen />}
+          {tab === 'calendar' && <CalendarScreen />}
+          {tab === 'insights' && <InsightsScreen />}
+          {tab === 'add' && <AddHabitScreen />}
+        </View>
+        <View style={styles.tabBar}>
+          <TabBtn label="Today" active={tab === 'today'} onPress={() => setTab('today')} />
+          <TabBtn label="Calendar" active={tab === 'calendar'} onPress={() => setTab('calendar')} />
+          <TabBtn label="Insights" active={tab === 'insights'} onPress={() => setTab('insights')} />
+          <TabBtn label="Add" active={tab === 'add'} onPress={() => setTab('add')} />
+        </View>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 };
 
