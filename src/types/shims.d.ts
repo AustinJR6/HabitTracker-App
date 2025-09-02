@@ -1,5 +1,9 @@
 declare module 'victory-native' {
-  const VictoryNative: any;
-  export = VictoryNative;
+  export const VictoryChart: any;
+  export const VictoryBar: any;
+  export const VictoryAxis: any;
+  export const VictoryGroup: any;
+  export const VictoryLine: any;
+  export const VictoryTooltip: any;
 }
 
