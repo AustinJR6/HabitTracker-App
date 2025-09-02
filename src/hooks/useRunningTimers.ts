@@ -1,19 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { HabitV2, RunningTimer } from '../types/v2';
+import { RunningTimer } from '../types';
 
 const STORAGE_KEY = '@runningTimers';
 
 type TimersMap = Record<string, RunningTimer | undefined>;
 
-export function useRunningTimers(
-  opts: {
-    habits?: HabitV2[];
-    onAutoComplete?: (habitId: string, minutes: number, badge?: string) => void;
-  } = {}
-) {
-  const { habits = [], onAutoComplete } = opts;
+export function useRunningTimers() {
   const [runningTimers, setRunningTimers] = useState<TimersMap>({});
   const [tick, setTick] = useState(0);
   const appState = useRef<AppStateStatus>(AppState.currentState);
@@ -38,30 +32,18 @@ export function useRunningTimers(
     await save(next);
   }, [runningTimers, save]);
 
-  const stopTimer = useCallback(async (habitId: string, opts?: { saveAsCompleted?: boolean; minutesOverride?: number; badge?: string }) => {
-    const rt = runningTimers[habitId];
+  const stopTimer = useCallback(async (habitId: string) => {
     const next: TimersMap = { ...runningTimers };
     delete next[habitId];
     setRunningTimers(next);
     await save(next);
-    if (opts?.saveAsCompleted) {
-      const elapsedMs = opts?.minutesOverride != null ? opts.minutesOverride * 60000 : (rt ? Date.now() - new Date(rt.startedAt).getTime() : 0);
-      const minutes = Math.max(0, Math.round(elapsedMs / 60000));
-      onAutoComplete?.(habitId, minutes, opts?.badge);
-    }
-  }, [runningTimers, save, onAutoComplete]);
+  }, [runningTimers, save]);
 
   const getElapsedMs = useCallback((habitId: string) => {
     const rt = runningTimers[habitId];
     if (!rt) return 0;
     return Math.max(0, Date.now() - new Date(rt.startedAt).getTime());
   }, [runningTimers]);
-
-  const computeBadge = useCallback((habit: HabitV2, minutes: number) => {
-    if (!habit.milestones || habit.milestones.length === 0) return undefined;
-    const eligible = habit.milestones.filter(m => minutes >= m.minutes).sort((a,b)=> b.minutes - a.minutes)[0];
-    return eligible?.badge;
-  }, []);
 
   // Ticker management with AppState
   useEffect(() => {

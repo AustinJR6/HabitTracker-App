@@ -10,7 +10,6 @@ import InsightsScreen from './src/screens/InsightsScreen';
 import Header from './src/components/Header';
 import Glow from './src/components/Glow';
 import { ensureNotifPermissions } from './src/notifications';
-import { scheduleV2DailyReminders } from './src/services/notificationsV2';
 import * as Notifications from 'expo-notifications';
 import { useHydrated } from './src/hooks/useHydrated';
 import { useEffect } from 'react';
@@ -37,9 +36,6 @@ const App: React.FC = () => {
     bootstrap().catch(() => {});
   }, []);
 
-  React.useEffect(() => {
-    scheduleV2DailyReminders();
-  }, []);
 
   if (!hydrated) return <View />;
 

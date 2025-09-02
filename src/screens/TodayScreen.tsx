@@ -6,33 +6,19 @@ import StreakCounter from '../components/StreakCounter';
 import { palette } from '../theme/palette';
 import { metrics } from '../theme/metrics';
 import { useHabitsV2 } from '../hooks/useHabitsV2';
-import { HabitV2 } from '../types/v2';
+import { Habit } from '../types';
 import { useRunningTimers } from '../hooks/useRunningTimers';
 import { msToMMSS } from '../utils/time';
 import { useOverallStreakV2 } from '../hooks/useStreaksV2';
 import Screen from '../components/Screen';
+import { computeBadge, DEFAULT_BADGE_TIERS } from '../lib/badges';
 
 export default function TodayScreen() {
   const iso = dayjs().format('YYYY-MM-DD');
-  const { habits, dueHabits, statusOf, markCompleted, refreshKey } = useHabitsV2();
-  const due: HabitV2[] = dueHabits(iso);
-  const { runningTimers, startTimer, stopTimer, getElapsedMs } = useRunningTimers({
-    habits,
-    onAutoComplete: (habitId, minutes, badge) => {
-      // auto-mark complete when threshold met
-      // Note: markCompleted persists the log and triggers refreshKey changes
-      markCompleted({ habitId, completed: true, duration: minutes, badge });
-    },
-  });
+  const { habits, logs, dueHabits, statusOf, markCompleted, refreshKey } = useHabitsV2();
+  const due: Habit[] = dueHabits(iso);
+  const { runningTimers, startTimer, stopTimer, getElapsedMs } = useRunningTimers();
   const streak = useOverallStreakV2(habits, refreshKey);
-
-  const badgeFor = (habit: HabitV2, minutes: number) => {
-    if (!habit.milestones || habit.milestones.length === 0) return undefined;
-    const eligible = habit.milestones
-      .filter(m => minutes >= m.minutes)
-      .sort((a,b)=> b.minutes - a.minutes)[0];
-    return eligible?.badge;
-  };
 
   return (
     <Screen style={styles.container}>
@@ -41,39 +27,45 @@ export default function TodayScreen() {
         <Text style={styles.sectionTitle}>Today</Text>
         <FlatList
           data={due}
-          keyExtractor={(item) => item.habitId}
+          keyExtractor={(item) => item.id}
           scrollEnabled={false}
           renderItem={({ item }) => {
-            const completed = !!statusOf(item.habitId);
-            const running = !!runningTimers[item.habitId];
+            const completed = !!statusOf(item.id);
+            const running = !!runningTimers[item.id];
+            const todayLog = logs.find(l => l.habitId === item.id);
+            const accumulated = todayLog?.durationMinutes ?? 0;
+            const currentBadge = todayLog?.lastBadge;
             return (
               <View style={{ gap: 8 }}>
                 <HabitItem
                   label={item.name}
                   checked={completed}
                   onToggle={() => {
-                    if (!item.useTimer) {
+                    if (!item.timed) {
                       // toggle completion for non-timer habits
-                      markCompleted({ habitId: item.habitId, completed: !completed, duration: !completed ? (item.minTime ?? 0) : 0 });
+                      markCompleted({ habitId: item.id, completed: !completed, durationMinutes: !completed ? (item.minMinutes ?? 0) : 0 });
                     }
                   }}
                 />
-                {item.useTimer && (
+                {item.timed && (
                   <View style={styles.timerRow}>
                     {!running ? (
-                      <Pressable onPress={() => startTimer(item.habitId)} style={styles.timerBtn}><Text style={styles.timerText}>Start</Text></Pressable>
+                      <Pressable onPress={() => startTimer(item.id)} style={styles.timerBtn}><Text style={styles.timerText}>Start</Text></Pressable>
                     ) : (
                       <Pressable onPress={() => {
-                        const ms = getElapsedMs(item.habitId);
+                        const ms = getElapsedMs(item.id);
                         const minutes = Math.max(0, Math.round(ms / 60000));
-                        const ok = item.minTime ? minutes >= item.minTime : true;
-                        const badge = badgeFor(item, minutes);
-                        stopTimer(item.habitId, { saveAsCompleted: ok, minutesOverride: minutes, badge });
+                        stopTimer(item.id);
+                        const total = accumulated + minutes;
+                        const badge = computeBadge(total, item.badgeTiers ?? DEFAULT_BADGE_TIERS);
+                        const done = item.minMinutes != null ? total >= item.minMinutes : true;
+                        markCompleted({ habitId: item.id, completed: done, durationMinutes: total, badge });
                       }} style={styles.timerBtnStop}><Text style={styles.timerText}>Stop & Save</Text></Pressable>
                     )}
                     <Text style={styles.timerHint}>
-                      {item.minTime != null ? `Min: ${item.minTime}m • ` : ''}{msToMMSS(getElapsedMs(item.habitId))}
+                      {item.minMinutes != null ? `Min: ${item.minMinutes}m · ` : ''}{running ? msToMMSS(getElapsedMs(item.id)) : msToMMSS(accumulated * 60000)}
                     </Text>
+                    {currentBadge ? <Text style={styles.badge}>🏅 {currentBadge}</Text> : null}
                   </View>
                 )}
               </View>
@@ -102,4 +94,5 @@ const styles = StyleSheet.create({
   timerBtnStop: { backgroundColor: '#dc2626', paddingVertical: 8, paddingHorizontal: 12, borderRadius: metrics.radius },
   timerText: { color: '#fff' },
   timerHint: { color: palette.textDim },
+  badge: { color: palette.text },
 });
