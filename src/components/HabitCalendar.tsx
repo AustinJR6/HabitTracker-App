@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import { ISODate } from '../store/habits';
 import { palette } from '../theme/palette';
 import { useHabitsV2 } from '../hooks/useHabitsV2';
-import { getLogsByDateV2 } from '../services/storageV2';
+import { getLogsByDate } from '../storage';
 
 export function HabitCalendar({ onSelectDate }: { onSelectDate: (iso: ISODate) => void }) {
   const { habits, dueHabits, refreshKey } = useHabitsV2();
@@ -20,8 +20,8 @@ export function HabitCalendar({ onSelectDate }: { onSelectDate: (iso: ISODate) =
         const iso = d.format('YYYY-MM-DD') as ISODate;
         const due = dueHabits(iso);
         if (due.length === 0) continue;
-        const logs = await getLogsByDateV2(iso);
-        const allDone = due.length > 0 && due.every(h => logs.find(l => l.habitId === h.habitId)?.completed);
+        const logs = await getLogsByDate(iso);
+        const allDone = due.length > 0 && due.every(h => logs.find(l => l.habitId === h.id)?.completed);
         marks[iso] = {
           customStyles: {
             container: { backgroundColor: allDone ? '#22c55e' : '#ef4444', borderRadius: 6 },

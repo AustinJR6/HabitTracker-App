@@ -13,7 +13,7 @@ export default function CalendarScreen() {
   const { logs, dueHabits } = useHabitsV2();
   const due = dueHabits(date);
   const statusOf = (habitId: string) => !!logs.find(l => l.habitId === habitId)?.completed;
-  const badgeOf = (habitId: string) => logs.find(l => l.habitId === habitId)?.badge;
+  const badgeOf = (habitId: string) => logs.find(l => l.habitId === habitId)?.lastBadge;
 
   return (
     <Screen style={styles.container}>
@@ -22,13 +22,13 @@ export default function CalendarScreen() {
         <Text style={styles.sectionTitle}>{dayjs(date).format('ddd, MMM D')}</Text>
         <FlatList
           data={due}
-          keyExtractor={(item) => item.habitId}
+          keyExtractor={(item) => item.id}
           scrollEnabled={false}
           renderItem={({ item }) => (
             <View style={styles.row}>
               <Text style={styles.label}>{item.name}</Text>
-              <Text style={styles.status}>{statusOf(item.habitId) ? 'completed' : 'incomplete'}</Text>
-              {badgeOf(item.habitId) ? <Text style={styles.badge}>🏅 {badgeOf(item.habitId)}</Text> : null}
+              <Text style={styles.status}>{statusOf(item.id) ? 'completed' : 'incomplete'}</Text>
+              {badgeOf(item.id) ? <Text style={styles.badge}>🏅 {badgeOf(item.id)}</Text> : null}
             </View>
           )}
           ListEmptyComponent={<Text style={styles.empty}>No habits due</Text>}

@@ -4,13 +4,15 @@ import HabitFormV2, { HabitFormV2Ref } from '../components/HabitFormV2';
 import { palette } from '../theme/palette';
 import { metrics } from '../theme/metrics';
 import { useHabitsV2 } from '../hooks/useHabitsV2';
-import { HabitV2 } from '../types/v2';
+import { Habit } from '../types';
 import Screen from '../components/Screen';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+const DOW_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
 export default function AddHabitScreen() {
   const { habits, removeHabit } = useHabitsV2();
-  const [editing, setEditing] = React.useState<HabitV2 | null>(null);
+  const [editing, setEditing] = React.useState<Habit | null>(null);
   const insets = useSafeAreaInsets();
   const formRef = React.useRef<HabitFormV2Ref>(null);
 
@@ -32,19 +34,19 @@ export default function AddHabitScreen() {
         <Text style={styles.sectionTitle}>Your Habits</Text>
         <FlatList
           data={habits}
-          keyExtractor={(item) => item.habitId}
+          keyExtractor={(item) => item.id}
           scrollEnabled={false}
           renderItem={({ item }) => (
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.meta}>{item.days.join(' · ')}{item.useTimer && (item.minTime != null ? `  •  min ${item.minTime}m` : '')}</Text>
+                <Text style={styles.meta}>{item.days.map(d => DOW_LABELS[d]).join(' · ')}{item.timed && (item.minMinutes != null ? `  •  min ${item.minMinutes}m` : '')}</Text>
               </View>
               <Pressable onPress={() => setEditing(item)} style={styles.btn}><Text style={styles.btnText}>Edit</Text></Pressable>
               <Pressable onPress={() => {
                 Alert.alert('Delete Habit', `Delete "${item.name}"?`, [
                   { text: 'Cancel', style: 'cancel' },
-                  { text: 'Delete', style: 'destructive', onPress: () => removeHabit(item.habitId) },
+                  { text: 'Delete', style: 'destructive', onPress: () => removeHabit(item.id) },
                 ]);
               }} style={[styles.btn, styles.btnDanger]}><Text style={styles.btnText}>Delete</Text></Pressable>
             </View>
