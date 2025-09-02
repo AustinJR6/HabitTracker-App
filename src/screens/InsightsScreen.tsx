@@ -1,7 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import dayjs from 'dayjs';
-// Chart lib will be loaded dynamically
+import {
+  VictoryChart,
+  VictoryBar,
+  VictoryAxis,
+  VictoryTheme,
+  // VictoryGroup,
+  // VictoryLine,
+  // VictoryTooltip,
+} from 'victory-native';
 import { getHabitsV2, getLogsByDateV2 } from '../services/storageV2';
 import { HabitV2 } from '../types/v2';
 import { useOverallStreakV2, usePerHabitStreaksV2 } from '../hooks/useStreaksV2';
@@ -32,7 +40,6 @@ async function collectRange(ymdFrom: string, ymdTo: string) {
 }
 
 export default function InsightsScreen() {
-  const [V, setV] = React.useState<any>(null);
   const [mode, setMode] = React.useState<'week'|'month'>('week');
   const [habits, setHabits] = React.useState<HabitV2[]>([]);
   const [totals, setTotals] = React.useState<Totals>({});
@@ -50,19 +57,12 @@ export default function InsightsScreen() {
     })();
   }, [mode]);
 
-  const data = habits.map(h => ({ habit: h.name, minutes: totals[h.habitId] ?? 0 })).filter(x => x.minutes > 0);
-
-  React.useEffect(() => {
-    let mounted = true;
-    (async () => {
-      if (data.length === 0 || V) return;
-      try {
-        const mod = await import('victory-native');
-        if (mounted) setV(mod);
-      } catch {}
-    })();
-    return () => { mounted = false; };
-  }, [data.length, V]);
+  const data = habits.map(h => ({ habit: h.name, minutes: totals[h.habitId] ?? 0 }));
+  const safeData = (arr: { habit: any; minutes: any }[]) =>
+    (Array.isArray(arr) ? arr : [])
+      .map(d => ({ x: d.habit, y: Number(d.minutes) }))
+      .filter(d => d && d.x != null && Number.isFinite(d.y));
+  const chartData = safeData(data);
 
   return (
     <Screen style={styles.container}>
@@ -74,12 +74,12 @@ export default function InsightsScreen() {
         </View>
       </View>
       <Text style={styles.row}>Overall streak: {overall} day(s)</Text>
-      {data.length > 0 && V ? (
-        <V.VictoryChart theme={V.VictoryTheme.material} domainPadding={20}>
-          <V.VictoryAxis style={{ tickLabels: { angle: 45, fill: '#cbd5e1', fontSize: 10 } }} />
-          <V.VictoryAxis dependentAxis style={{ tickLabels: { fill: '#cbd5e1' } }} tickFormat={(t: any) => `${t}m`} />
-          <V.VictoryBar data={data} x="habit" y="minutes" style={{ data: { fill: '#4f46e5' } }} />
-        </V.VictoryChart>
+      {chartData.length > 0 ? (
+        <VictoryChart theme={VictoryTheme?.material ?? undefined} domainPadding={20}>
+          <VictoryAxis style={{ tickLabels: { angle: 45, fill: '#cbd5e1', fontSize: 10 } }} />
+          <VictoryAxis dependentAxis style={{ tickLabels: { fill: '#cbd5e1' } }} tickFormat={(t: any) => `${t}m`} />
+          <VictoryBar data={chartData} style={{ data: { fill: '#4f46e5' } }} />
+        </VictoryChart>
       ) : (
         <Text style={styles.empty}>No time tracked yet.</Text>
       )}
@@ -123,3 +123,4 @@ const styles = StyleSheet.create({
   pillActive: { backgroundColor: palette.card },
   pillText: { color: palette.text },
 });
+
