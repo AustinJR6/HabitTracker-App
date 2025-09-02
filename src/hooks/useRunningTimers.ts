@@ -84,22 +84,8 @@ export function useRunningTimers(
     return () => { sub.remove(); clearIntervalIfAny(); };
   }, [runningTimers]);
 
-  // Auto-complete when elapsed >= minTime
-  useEffect(() => {
-    const entries = Object.values(runningTimers).filter(Boolean) as RunningTimer[];
-    for (const rt of entries) {
-      const h = habits.find(x => x.habitId === rt.habitId);
-      if (!h || !h.useTimer || !h.minTime) continue;
-      const elapsedMs = Date.now() - new Date(rt.startedAt).getTime();
-      if (elapsedMs >= h.minTime * 60000) {
-        const minutes = Math.max(0, Math.round(elapsedMs / 60000));
-        const badge = computeBadge(h, minutes);
-        stopTimer(rt.habitId, { saveAsCompleted: true, minutesOverride: minutes, badge });
-      }
-    }
-    // re-run every tick
-  }, [tick, runningTimers, habits, computeBadge, stopTimer]);
+  // Note: No auto-complete. Timers run until the user stops them.
+  // This allows tracking actual time beyond the minimum.
 
   return { runningTimers, startTimer, stopTimer, getElapsedMs };
 }
-
