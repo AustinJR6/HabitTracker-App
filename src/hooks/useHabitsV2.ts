@@ -47,10 +47,18 @@ export function useHabitsV2() {
     setRefreshKey((v) => v + 1);
   }, [habits, reloadHabits]);
 
-  const markCompleted = useCallback(async (params: { habitId: string; completed: boolean; durationMinutes?: number; badge?: BadgeLabel; ymd?: string; }) => {
+  const markCompleted = useCallback(async (params: { habitId: string; completed: boolean; durationMinutes?: number; countValue?: number; badge?: BadgeLabel; ymd?: string; }) => {
     const ymd = params.ymd ?? date;
     const id = `${params.habitId}-${ymd}`;
-    await logHabit({ id, date: ymd, habitId: params.habitId, completed: params.completed, durationMinutes: Math.max(0, Math.floor(params.durationMinutes ?? 0)), lastBadge: params.badge });
+    await logHabit({
+      id,
+      date: ymd,
+      habitId: params.habitId,
+      completed: params.completed,
+      durationMinutes: Math.max(0, Math.floor(params.durationMinutes ?? 0)),
+      countValue: Math.max(0, Math.floor(params.countValue ?? 0)),
+      lastBadge: params.badge,
+    });
     await reloadLogs(ymd);
     setRefreshKey((v) => v + 1);
   }, [date, reloadLogs]);

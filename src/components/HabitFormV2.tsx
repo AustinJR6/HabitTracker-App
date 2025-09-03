@@ -1,12 +1,13 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, Switch } from 'react-native';
 import SelectableChip from './SelectableChip';
-import { Habit, BadgeTier } from '../types';
-import { palette } from '../theme/palette';
+import ColorPicker from './ColorPicker';
+import { Habit, MetricKind } from '../types';
+import { palette, HABIT_COLORS } from '../theme/palette';
 import { metrics } from '../theme/metrics';
 import { upsertHabit } from '../storage';
 import { scheduleHabitReminders, cancelReminderIds } from '../lib/reminders';
-import { DEFAULT_BADGE_TIERS } from '../lib/badges';
+import { DEFAULT_TIERS } from '../lib/badges';
 
 const DOW = [0,1,2,3,4,5,6];
 const DOW_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -17,14 +18,23 @@ export default forwardRef<HabitFormV2Ref, { onSaved?: () => void; initial?: Habi
 function HabitFormV2({ onSaved, initial, hideSubmit }, ref) {
   const [name, setName] = React.useState(initial?.name ?? '');
   const [days, setDays] = React.useState<number[]>(initial?.days ?? [1,2,3,4,5]);
-  const [timed, setTimed] = React.useState(!!initial?.timed);
+  const [metric, setMetric] = React.useState<MetricKind>(initial?.metric ?? (initial?.timed ? 'time' : 'count'));
   const [minMinutes, setMinMinutes] = React.useState<string>(initial?.minMinutes != null ? String(initial.minMinutes) : '5');
-  const [enableBadges, setEnableBadges] = React.useState(!!initial?.badgeTiers?.length);
-  const [badgeTiers, setBadgeTiers] = React.useState<BadgeTier[]>(initial?.badgeTiers ?? DEFAULT_BADGE_TIERS);
+  const [unitLabel, setUnitLabel] = React.useState(initial?.unitLabel ?? 'unit');
+  const [enableMilestones, setEnableMilestones] = React.useState(!!initial?.milestonesEnabled);
+  const [tierValues, setTierValues] = React.useState<number[]>(initial?.milestoneTiers ? initial.milestoneTiers.map(t=>t.value) : DEFAULT_TIERS.map(t=>t.value));
+  const [displayColor, setDisplayColor] = React.useState(initial?.displayColor ?? HABIT_COLORS[0]);
   const [reminders, setReminders] = React.useState<string[]>(initial?.reminders ?? []);
   const [rh, setRh] = React.useState('');
   const [rm, setRm] = React.useState('');
   const [mer, setMer] = React.useState<'AM'|'PM'>('AM');
+
+  React.useEffect(() => {
+    if (metric === 'count') {
+      setMinMinutes('');
+      if (!unitLabel) setUnitLabel('unit');
+    }
+  }, [metric, unitLabel]);
 
   const toggleDay = (d: number) => {
     setDays(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]);
@@ -52,10 +62,14 @@ function HabitFormV2({ onSaved, initial, hideSubmit }, ref) {
       id,
       name: name.trim(),
       days: days.length ? days.sort((a,b)=>a-b) : [1,2,3,4,5],
-      timed,
-      minMinutes: timed ? Math.max(0, parseInt(minMinutes || '0',10)) : undefined,
+      metric,
+      timed: metric === 'time',
+      minMinutes: metric === 'time' ? Math.max(0, parseInt(minMinutes || '0',10)) : undefined,
+      unitLabel: metric === 'count' ? (unitLabel.trim() || 'unit') : undefined,
       reminders,
-      badgeTiers: enableBadges ? badgeTiers.slice().sort((a,b)=>a.minutes-b.minutes) : undefined,
+      displayColor,
+      milestonesEnabled: enableMilestones,
+      milestoneTiers: enableMilestones ? ['red','yellow','green','blue'].map((label, i) => ({ value: Math.max(0, tierValues[i] || 0), label: label as any })) : undefined,
     };
 
     if (initial?.reminderIds?.length) await cancelReminderIds(initial.reminderIds);
@@ -64,18 +78,20 @@ function HabitFormV2({ onSaved, initial, hideSubmit }, ref) {
 
     await upsertHabit(habit);
     if (!initial) {
-      setName(''); setDays([1,2,3,4,5]); setTimed(false); setMinMinutes('5'); setEnableBadges(false); setBadgeTiers(DEFAULT_BADGE_TIERS); setReminders([]);
+      setName('');
+      setDays([1,2,3,4,5]);
+      setMetric('time');
+      setMinMinutes('5');
+      setUnitLabel('unit');
+      setEnableMilestones(false);
+      setTierValues(DEFAULT_TIERS.map(t=>t.value));
+      setDisplayColor(HABIT_COLORS[0]);
+      setReminders([]);
     }
     onSaved?.();
   };
 
   useImperativeHandle(ref, () => ({ submit: save }), [save]);
-
-  const updateBadgeTier = (idx: number, patch: Partial<BadgeTier>) => {
-    setBadgeTiers(prev => prev.map((b,i) => i===idx ? { ...b, ...patch } : b));
-  };
-  const addBadgeTier = () => setBadgeTiers(prev => [...prev, { minutes: 1, label: 'red' }]);
-  const removeBadgeTier = (idx: number) => setBadgeTiers(prev => prev.filter((_,i)=>i!==idx));
 
   return (
     <View style={styles.wrap}>
@@ -94,14 +110,16 @@ function HabitFormV2({ onSaved, initial, hideSubmit }, ref) {
         ))}
       </View>
 
-      <View style={styles.switchRow}>
-        <Text style={styles.switchText}>Track time for this habit?</Text>
-        <Switch value={timed} onValueChange={setTimed} />
+      <Text style={styles.label}>Metric</Text>
+      <View style={styles.daysWrap}>
+        {(['time','count'] as const).map(m => (
+          <SelectableChip key={m} label={m==='time' ? 'Time' : 'Count'} selected={metric===m} onPress={()=>setMetric(m)} />
+        ))}
       </View>
 
-      {timed && (
+      {metric === 'time' ? (
         <View style={{ gap: 8 }}>
-          <Text style={styles.label}>Minimum time required (minutes)</Text>
+          <Text style={styles.label}>Min minutes</Text>
           <TextInput
             value={minMinutes}
             onChangeText={setMinMinutes}
@@ -110,37 +128,44 @@ function HabitFormV2({ onSaved, initial, hideSubmit }, ref) {
             placeholderTextColor={palette.textDim}
             style={styles.input}
           />
-          <View style={styles.switchRow}>
-            <Text style={styles.switchText}>Enable milestone badges?</Text>
-            <Switch value={enableBadges} onValueChange={setEnableBadges} />
-          </View>
-          {enableBadges && (
-            <View style={{ gap: 8 }}>
-              {badgeTiers.map((b,i)=> (
-                <View key={i} style={styles.milestoneRow}>
-                  <TextInput
-                    value={String(b.minutes)}
-                    onChangeText={t=>updateBadgeTier(i,{ minutes: Math.max(0, parseInt(t||'0',10)) })}
-                    keyboardType="number-pad"
-                    style={[styles.input, styles.milestoneMinutes]}
-                    placeholder="min"
-                    placeholderTextColor={palette.textDim}
-                  />
-                  <TextInput
-                    value={b.label}
-                    onChangeText={t=>updateBadgeTier(i,{ label: t as any })}
-                    style={[styles.input, styles.milestoneBadge]}
-                    placeholder="badge"
-                    placeholderTextColor={palette.textDim}
-                  />
-                  <Pressable onPress={()=>removeBadgeTier(i)} style={styles.removeBtn}><Text style={styles.removeText}>✕</Text></Pressable>
-                </View>
-              ))}
-              <Pressable onPress={addBadgeTier} style={styles.addBtn}><Text style={styles.addText}>Add milestone</Text></Pressable>
-            </View>
-          )}
+        </View>
+      ) : (
+        <View style={{ gap: 8 }}>
+          <Text style={styles.label}>Unit label</Text>
+          <TextInput
+            value={unitLabel}
+            onChangeText={setUnitLabel}
+            placeholder="word"
+            placeholderTextColor={palette.textDim}
+            style={styles.input}
+          />
         </View>
       )}
+
+      <View style={styles.switchRow}>
+        <Text style={styles.switchText}>Milestones</Text>
+        <Switch value={enableMilestones} onValueChange={(v)=>{ if(v && tierValues.length===0) setTierValues(DEFAULT_TIERS.map(t=>t.value)); setEnableMilestones(v); }} />
+      </View>
+      {enableMilestones && (
+        <View style={{ gap: 8 }}>
+          {['red','yellow','green','blue'].map((label,i)=> (
+            <View key={label} style={styles.milestoneRow}>
+              <TextInput
+                value={String(tierValues[i] ?? 0)}
+                onChangeText={t=>setTierValues(prev=>prev.map((v,idx)=>idx===i?Math.max(0, parseInt(t||'0',10)):v))}
+                keyboardType="number-pad"
+                style={[styles.input, styles.milestoneMinutes]}
+                placeholder={metric==='time' ? 'min' : 'units'}
+                placeholderTextColor={palette.textDim}
+              />
+              <Text style={styles.milestoneBadge}>{label}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      <Text style={styles.label}>Color</Text>
+      <ColorPicker value={displayColor} onChange={setDisplayColor} />
 
       <Text style={styles.label}>Reminders</Text>
       <View style={styles.remindersCard}>
@@ -195,7 +220,7 @@ const styles = StyleSheet.create({
   saveText: { color: '#fff', fontWeight:'600' },
   milestoneRow: { flexDirection:'row', alignItems:'center', gap:8 },
   milestoneMinutes: { width:90 },
-  milestoneBadge: { flex:1 },
+  milestoneBadge: { color: palette.text, alignSelf:'center' },
   addBtn: { alignSelf:'flex-start', backgroundColor:'transparent', borderWidth:1, borderColor:palette.border, paddingHorizontal:10, paddingVertical:6, borderRadius:8 },
   addText: { color: palette.text },
   removeBtn: { paddingHorizontal:8, paddingVertical:6 },

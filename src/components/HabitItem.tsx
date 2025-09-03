@@ -10,9 +10,10 @@ interface Props {
   label: string;
   checked: boolean;
   onToggle: () => void;
+  color?: string;
 }
 
-const HabitItem: React.FC<Props> = ({ label, checked, onToggle }) => {
+const HabitItem: React.FC<Props> = ({ label, checked, onToggle, color }) => {
   const scale = useRef(new Animated.Value(1)).current;
 
   const animatePress = (to: number, duration = 100) => {
@@ -48,7 +49,7 @@ const HabitItem: React.FC<Props> = ({ label, checked, onToggle }) => {
   }, [checked]);
 
   return (
-    <Animated.View style={[styles.container, { transform: [{ scale }] }]}> 
+    <Animated.View style={[styles.container, { borderLeftColor: color || 'transparent', transform: [{ scale }] }]}> 
       <Pressable
         onPress={onPress}
         onPressIn={() => animatePress(0.97)}
@@ -70,6 +71,8 @@ const styles = StyleSheet.create({
     borderRadius: metrics.radius,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: palette.border,
+    borderLeftWidth: 4,
+    borderLeftColor: 'transparent',
     marginBottom: metrics.gap,
     shadowColor: '#000',
     shadowOpacity: 0.2,
