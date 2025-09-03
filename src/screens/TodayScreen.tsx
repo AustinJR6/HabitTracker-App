@@ -11,7 +11,7 @@ import { useRunningTimers } from '../hooks/useRunningTimers';
 import { msToMMSS } from '../utils/time';
 import { useOverallStreakV2 } from '../hooks/useStreaksV2';
 import Screen from '../components/Screen';
-import { computeBadge, DEFAULT_BADGE_TIERS } from '../lib/badges';
+import { computeBadge, DEFAULT_TIERS } from '../lib/badges';
 
 export default function TodayScreen() {
   const iso = dayjs().format('YYYY-MM-DD');
@@ -34,20 +34,22 @@ export default function TodayScreen() {
             const running = !!runningTimers[item.id];
             const todayLog = logs.find(l => l.habitId === item.id);
             const accumulated = todayLog?.durationMinutes ?? 0;
+            const countVal = todayLog?.countValue ?? 0;
             const currentBadge = todayLog?.lastBadge;
+            const handleCount = (delta: number) => {
+              const next = Math.max(0, countVal + delta);
+              const badge = computeBadge(next, item.milestoneTiers ?? DEFAULT_TIERS);
+              markCompleted({ habitId: item.id, completed: next > 0, countValue: next, badge });
+            };
             return (
               <View style={{ gap: 8 }}>
                 <HabitItem
                   label={item.name}
                   checked={completed}
-                  onToggle={() => {
-                    if (!item.timed) {
-                      // toggle completion for non-timer habits
-                      markCompleted({ habitId: item.id, completed: !completed, durationMinutes: !completed ? (item.minMinutes ?? 0) : 0 });
-                    }
-                  }}
+                  color={item.displayColor}
+                  onToggle={() => {}}
                 />
-                {item.timed && (
+                {item.metric === 'time' ? (
                   <View style={styles.timerRow}>
                     {!running ? (
                       <Pressable onPress={() => startTimer(item.id)} style={styles.timerBtn}><Text style={styles.timerText}>Start</Text></Pressable>
@@ -57,13 +59,26 @@ export default function TodayScreen() {
                         const minutes = Math.max(0, Math.round(ms / 60000));
                         stopTimer(item.id);
                         const total = accumulated + minutes;
-                        const badge = computeBadge(total, item.badgeTiers ?? DEFAULT_BADGE_TIERS);
+                        const badge = computeBadge(total, item.milestoneTiers ?? DEFAULT_TIERS);
                         const done = item.minMinutes != null ? total >= item.minMinutes : true;
                         markCompleted({ habitId: item.id, completed: done, durationMinutes: total, badge });
                       }} style={styles.timerBtnStop}><Text style={styles.timerText}>Stop & Save</Text></Pressable>
                     )}
                     <Text style={styles.timerHint}>
                       {item.minMinutes != null ? `Min: ${item.minMinutes}m · ` : ''}{running ? msToMMSS(getElapsedMs(item.id)) : msToMMSS(accumulated * 60000)}
+                    </Text>
+                    {currentBadge ? <Text style={styles.badge}>🏅 {currentBadge}</Text> : null}
+                  </View>
+                ) : (
+                  <View style={styles.countRow}>
+                    <View style={styles.countBtns}>
+                      {[1,5,10].map(n => (
+                        <Pressable key={n} onPress={() => handleCount(n)} style={styles.timerBtn}><Text style={styles.timerText}>+{n}</Text></Pressable>
+                      ))}
+                      <Pressable onPress={() => handleCount(-1)} style={styles.timerBtn}><Text style={styles.timerText}>-1</Text></Pressable>
+                    </View>
+                    <Text style={styles.timerHint}>
+                      {item.unitLabel ? `${item.unitLabel.charAt(0).toUpperCase()+item.unitLabel.slice(1)} today: ${countVal}` : `Count today: ${countVal}`}
                     </Text>
                     {currentBadge ? <Text style={styles.badge}>🏅 {currentBadge}</Text> : null}
                   </View>
@@ -95,4 +110,6 @@ const styles = StyleSheet.create({
   timerText: { color: '#fff' },
   timerHint: { color: palette.textDim },
   badge: { color: palette.text },
+  countRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  countBtns: { flexDirection: 'row', gap: 6 },
 });

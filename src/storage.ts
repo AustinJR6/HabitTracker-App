@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Habit, HabitLog } from './types';
+import { HABIT_COLORS } from './theme/palette';
+import { DEFAULT_TIERS } from './lib/badges';
 
 const HABITS_KEY = 'habits';
 const logsKey = (ymd: string) => `logs_${ymd}`; // ymd = YYYY-MM-DD
@@ -12,11 +14,26 @@ export async function getHabits(): Promise<Habit[]> {
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr)) return [];
     // safe migrations
-    return arr.map((h: any) => ({
-      reminders: Array.isArray(h.reminders) ? h.reminders : [],
-      timed: !!h.timed,
-      ...h,
-    })) as Habit[];
+    return arr.map((h: any) => {
+      const metric = h.metric || (h.timed ? 'time' : 'count');
+      const displayColor = h.displayColor || HABIT_COLORS[0];
+      const milestoneTiers = h.milestoneTiers ||
+        (Array.isArray(h.badgeTiers)
+          ? h.badgeTiers.map((b: any) => ({ value: b.minutes ?? b.value, label: b.label }))
+          : undefined);
+      const milestonesEnabled = h.milestonesEnabled ?? (Array.isArray(milestoneTiers) && milestoneTiers.length > 0);
+      return {
+        reminders: Array.isArray(h.reminders) ? h.reminders : [],
+        metric,
+        timed: metric === 'time',
+        displayColor,
+        milestonesEnabled,
+        milestoneTiers: milestonesEnabled ? (milestoneTiers && milestoneTiers.length ? milestoneTiers : DEFAULT_TIERS) : undefined,
+        unitLabel: h.unitLabel,
+        minMinutes: metric === 'time' ? h.minMinutes : undefined,
+        ...h,
+      } as Habit;
+    });
   } catch {
     return [];
   }

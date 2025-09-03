@@ -12,3 +12,8 @@ export const palette = {
   glow: 'rgba(0,122,255,0.25)',
 };
 
+export const HABIT_COLORS = [
+  '#3b82f6', '#22c55e', '#ef4444', '#f59e0b', '#a855f7',
+  '#06b6d4', '#10b981', '#e11d48', '#f97316', '#0ea5e9',
+  '#84cc16', '#eab308', '#14b8a6', '#6366f1', '#fb7185',
+];

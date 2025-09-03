@@ -38,9 +38,12 @@ export default function AddHabitScreen() {
           scrollEnabled={false}
           renderItem={({ item }) => (
             <View style={styles.row}>
+              <View style={styles.colorDotWrapper}>
+                <View style={[styles.colorDot, { backgroundColor: item.displayColor }]} />
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.meta}>{item.days.map(d => DOW_LABELS[d]).join(' · ')}{item.timed && (item.minMinutes != null ? `  •  min ${item.minMinutes}m` : '')}</Text>
+                <Text style={styles.meta}>{item.days.map(d => DOW_LABELS[d]).join(' · ')}{item.metric === 'time' && item.minMinutes != null ? `  •  min ${item.minMinutes}m` : ''}{item.metric === 'count' && item.unitLabel ? `  •  ${item.unitLabel}` : ''}</Text>
               </View>
               <Pressable onPress={() => setEditing(item)} style={styles.btn}><Text style={styles.btnText}>Edit</Text></Pressable>
               <Pressable onPress={() => {
@@ -81,6 +84,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 },
   name: { color: palette.text, fontWeight: '600' },
   meta: { color: palette.textDim, marginTop: 2 },
+  colorDotWrapper: { width: 16, alignItems: 'center' },
+  colorDot: { width: 12, height: 12, borderRadius: 6 },
   btn: { backgroundColor: palette.accentEnd, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8 },
   btnDanger: { backgroundColor: '#dc2626' },
   btnText: { color: '#fff' },
